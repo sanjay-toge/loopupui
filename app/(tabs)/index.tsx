@@ -1,75 +1,266 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// LookupScreen.js
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  Image,
+  FlatList,
+} from "react-native";
 
 export default function HomeScreen() {
+  const [searchText, setSearchText] = useState("");
+
+  const allUsers = [
+    {
+      name: "Sophia",
+      desc: "Rated 2 days ago",
+      img: "https://picsum.photos/200?random=1",
+    },
+    {
+      name: "Ethan",
+      desc: "Rated 3 days ago",
+      img: "https://picsum.photos/200?random=2",
+    },
+    {
+      name: "Olivia",
+      desc: "Rated 4 days ago",
+      img: "https://picsum.photos/200?random=3",
+    },
+    {
+      name: "Liam",
+      desc: "Rated 5 days ago",
+      img: "https://picsum.photos/200?random=4",
+    },
+    {
+      name: "Noah",
+      desc: "1 mutual friend",
+      img: "https://picsum.photos/200?random=5",
+    },
+    {
+      name: "Ava",
+      desc: "2 mutual friends",
+      img: "https://picsum.photos/200?random=6",
+    },
+    {
+      name: "Jackson",
+      desc: "3 mutual friends",
+      img: "https://picsum.photos/200?random=7",
+    },
+    {
+      name: "Isabella",
+      desc: "4 mutual friends",
+      img: "https://picsum.photos/200?random=8",
+    },
+  ];
+
+  const filteredUsers = allUsers.filter((user) =>
+    user.name.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Lookup</Text>
+        <TouchableOpacity>
+          <Text style={styles.icon}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Search */}
+      <View style={styles.searchWrapper}>
+        <TextInput
+          placeholder="Search people..."
+          placeholderTextColor="#a596c5"
+          style={styles.searchInput}
+          value={searchText}
+          onChangeText={setSearchText}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+
+      {/* If searching, show results */}
+      {searchText.length > 0 ? (
+        <FlatList
+          data={filteredUsers}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.searchResultRow}>
+              <Image source={{ uri: item.img }} style={styles.searchAvatar} />
+              <View>
+                <Text style={styles.searchName}>{item.name}</Text>
+                <Text style={styles.searchDesc}>{item.desc}</Text>
+              </View>
+            </View>
+          )}
+        />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Stats */}
+          <View style={styles.statsWrapper}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>4.8</Text>
+              <Text style={styles.statLabel}>My Rating Score</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statLabel}>People Rated Me</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>8</Text>
+              <Text style={styles.statLabel}>People I Rated</Text>
+            </View>
+          </View>
+
+          {/* Recent Ratings */}
+          <Text style={styles.sectionTitle}>Recent Ratings</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {["Sophia", "Ethan", "Olivia", "Liam", "Simran", "Sanjay"].map(
+              (name, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => {
+                    router.navigate("/guest-user");
+                  }}
+                >
+                  <View style={styles.profileCard} key={i}>
+                    <Image
+                      style={styles.profileImage}
+                      source={{ uri: "https://picsum.photos/200?random=" + i }}
+                    />
+                    <Text style={styles.profileName}>{name}</Text>
+                    <Text style={styles.profileSub}>
+                      Rated {i + 2} days ago
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )
+            )}
+          </ScrollView>
+
+          {/* Suggested Profiles */}
+          <Text style={styles.sectionTitle}>Suggested Profiles</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {["Noah", "Ava", "Jackson", "Isabella"].map((name, i) => (
+              <TouchableOpacity
+                onPress={() => {
+                  router.navigate("/rateuser");
+                }}
+                key={i}
+              >
+                <View style={styles.profileCard} key={i}>
+                  <Image
+                    style={styles.profileImage}
+                    source={{
+                      uri: "https://picsum.photos/200?random=" + (i + 10),
+                    }}
+                  />
+                  <Text style={styles.profileName}>{name}</Text>
+                  <Text style={styles.profileSub}>{i + 1} mutual friends</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Qualities */}
+          <Text style={styles.sectionTitle}>
+            Most Appreciated Qualities This Week
+          </Text>
+          <View style={styles.qualitiesWrapper}>
+            {[
+              "Kindness",
+              "Honesty",
+              "Reliability",
+              "Humor",
+              "Supportiveness",
+            ].map((q, i) => (
+              <View style={styles.qualityTag} key={i}>
+                <Text style={styles.qualityText}>{q}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, backgroundColor: "#171221", paddingTop: 40 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
+    alignItems: "center",
   },
-  stepContainer: {
-    gap: 8,
+  headerTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
+  icon: { color: "#FFFFFF", fontSize: 20 },
+  searchWrapper: { paddingHorizontal: 16, marginBottom: 12 },
+  searchInput: {
+    backgroundColor: "#302645",
+    color: "white",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  // Search result styling
+  searchResultRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#302645",
+  },
+  searchAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
+  searchName: { color: "white", fontSize: 16, fontWeight: "600" },
+  searchDesc: { color: "#a596c5", fontSize: 14 },
+  // Rest of your styles stay same...
+  statsWrapper: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#221b31",
+    borderWidth: 1,
+    borderColor: "#443663",
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 4,
+    alignItems: "center",
+  },
+  statNumber: { color: "white", fontSize: 20, fontWeight: "bold" },
+  statLabel: { color: "#a596c5", fontSize: 12 },
+  sectionTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 16,
     marginBottom: 8,
+    paddingHorizontal: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  profileCard: { marginRight: 12, width: 100, alignItems: "center" },
+  profileImage: { width: 100, height: 100, borderRadius: 12, marginBottom: 8 },
+  profileName: { color: "white", fontSize: 14, fontWeight: "500" },
+  profileSub: { color: "#a596c5", fontSize: 12 },
+  qualitiesWrapper: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 12,
+    marginBottom: 20,
   },
+  qualityTag: {
+    backgroundColor: "#302645",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    margin: 4,
+  },
+  qualityText: { color: "white", fontSize: 12 },
 });
