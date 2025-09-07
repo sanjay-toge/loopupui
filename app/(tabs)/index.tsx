@@ -1,20 +1,33 @@
 // LookupScreen.js
+import { api } from "@/api/api";
+import { RecentRating } from "@/types/recentrating";
+import { User } from "@/types/user";
+import { formatDistanceToNow } from "date-fns";
+import * as Location from "expo-location";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Image,
   FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useAppContext } from "./_layout";
 
 export default function HomeScreen() {
   const [searchText, setSearchText] = useState("");
+  const [nearbyUsers, setNearbyUsers] = useState<User[]>([]); // ✅ state for API data
+  const [recentRatedUsers, setRecentRatedUsers] = useState<RecentRating[]>([]); // ✅ state for API data
+  const [peopleIRated, setPeopleIRated] = useState<number>(0);
+  const [peopleRatedMe, setPeopleRatedMe] = useState<number>(0);
+  // const [me, setMe] = useState<User>();
+  const { user } = useAppContext();
 
+  // const allUsers = [];
   const allUsers = [
     {
       name: "Sophia",
@@ -57,7 +70,76 @@ export default function HomeScreen() {
       img: "https://picsum.photos/200?random=8",
     },
   ];
+  const fetchSuggestedProfiles = async () => {
+    // console.log("fetching suggested profiles");
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        // console.log("Permission to access location was denied");
+        return;
+      }
 
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      // console.log("📍 Current Location:", latitude, longitude);
+
+      const response: User[] = await api.get(
+        `location/nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=5000`
+      );
+
+      // console.log("Nearby users:", response);
+      setNearbyUsers(response); // ✅ Save to state
+    } catch (error) {
+      console.error("Error getting suggested profiles:", error);
+    }
+  };
+
+  const fetchRecentRatedProfiles = async () => {
+    try {
+      const response: RecentRating[] = await api.get(
+        `Ratings/recent-given?limit=10`
+      );
+      setRecentRatedUsers(response);
+      // console.log(recentRatedUsers);
+    } catch (error) {
+      console.error("Error getting suggested profiles:", error);
+    }
+  };
+
+  // const fetchUserDetails = async () => {
+  //   const id = await SecureStore.getItemAsync("id");
+  //   if (!id) return null;
+  //   const response: User = await api.get(`user/${id}`);
+  //   // setMe(response);
+  // };
+
+  const fetchCount = async () => {
+    fetchPeopleIRated();
+    fetchPeopleRatedMe();
+  };
+
+  const fetchPeopleRatedMe = async () => {
+    const response: any = await api.get("Ratings/unique-raters-count");
+    setPeopleRatedMe(response?.count);
+  };
+  const fetchPeopleIRated = async () => {
+    const response: any = await api.get("Ratings/count");
+    setPeopleIRated(response?.count);
+  };
+
+  // ✅ Fetch on screen load
+  useEffect(() => {
+    fetchSuggestedProfiles();
+    fetchRecentRatedProfiles();
+    // fetchUserDetails();
+    fetchCount();
+  }, []);
+  // ✅ derive filtered nearby users
+  const filteredNearbyUsers = useMemo(() => {
+    const ratedUserIds = new Set(recentRatedUsers.map((r) => r.ratedUserId));
+    return nearbyUsers.filter((user) => !ratedUserIds.has(user.id));
+  }, [nearbyUsers, recentRatedUsers]);
   const filteredUsers = allUsers.filter((user) =>
     user.name.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -103,15 +185,15 @@ export default function HomeScreen() {
           {/* Stats */}
           <View style={styles.statsWrapper}>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>4.8</Text>
+              <Text style={styles.statNumber}>{user?.rating}</Text>
               <Text style={styles.statLabel}>My Rating Score</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statNumber}>{peopleRatedMe}</Text>
               <Text style={styles.statLabel}>People Rated Me</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>8</Text>
+              <Text style={styles.statNumber}>{peopleIRated}</Text>
               <Text style={styles.statLabel}>People I Rated</Text>
             </View>
           </View>
@@ -119,48 +201,56 @@ export default function HomeScreen() {
           {/* Recent Ratings */}
           <Text style={styles.sectionTitle}>Recent Ratings</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {["Sophia", "Ethan", "Olivia", "Liam", "Simran", "Sanjay"].map(
-              (name, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => {
-                    router.navigate("/guest-user");
-                  }}
-                >
-                  <View style={styles.profileCard} key={i}>
-                    <Image
-                      style={styles.profileImage}
-                      source={{ uri: "https://picsum.photos/200?random=" + i }}
-                    />
-                    <Text style={styles.profileName}>{name}</Text>
-                    <Text style={styles.profileSub}>
-                      Rated {i + 2} days ago
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )
-            )}
-          </ScrollView>
-
-          {/* Suggested Profiles */}
-          <Text style={styles.sectionTitle}>Suggested Profiles</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {["Noah", "Ava", "Jackson", "Isabella"].map((name, i) => (
+            {recentRatedUsers.map((data, i) => (
               <TouchableOpacity
-                onPress={() => {
-                  router.navigate("/rateuser");
-                }}
                 key={i}
+                onPress={() => {
+                  router.navigate(`/guest-user?userId=${data.ratedUserId}`);
+                }}
               >
                 <View style={styles.profileCard} key={i}>
                   <Image
                     style={styles.profileImage}
                     source={{
-                      uri: "https://picsum.photos/200?random=" + (i + 10),
+                      uri: data.image,
                     }}
                   />
-                  <Text style={styles.profileName}>{name}</Text>
-                  <Text style={styles.profileSub}>{i + 1} mutual friends</Text>
+                  <Text style={styles.profileName}>{data.name}</Text>
+                  <Text style={styles.profileSub}>
+                    Rated{" "}
+                    {formatDistanceToNow(new Date(data.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Suggested Profiles */}
+          <Text style={styles.sectionTitle}>Suggested Profiles</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {filteredNearbyUsers.map((user, i) => (
+              <TouchableOpacity
+                onPress={() =>
+                  router.navigate({
+                    pathname: "/rateuser",
+                    params: { user: JSON.stringify(user) },
+                  })
+                }
+                key={user.id || i}
+              >
+                <View style={styles.profileCard}>
+                  <Image
+                    style={styles.profileImage}
+                    source={{
+                      uri: user.image,
+                    }}
+                  />
+                  <Text style={styles.profileName}>{user.name}</Text>
+                  <Text style={styles.profileSub}>
+                    {user.rating} mutual rating
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))}

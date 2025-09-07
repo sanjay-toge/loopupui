@@ -1,20 +1,41 @@
 // app/profile.tsx
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ImageBackground,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { api } from "@/api/api";
+import { User } from "@/types/user";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function GuestUserPage() {
+  const { userId } = useLocalSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Profile");
+  const [user, setUser] = useState<User>();
+  const [exisitingRating, setExisitingRating] = useState();
+  useEffect(() => {
+    fetchUserProfile();
+    fetchExistingRating();
+  }, []);
 
+  const fetchUserProfile = async () => {
+    const response: User = await api.get(`User/${userId}`);
+    // console.log("fetchedUserProfile:" + JSON.stringify(response));
+    setUser(response);
+  };
+
+  const fetchExistingRating = async () => {
+    const response: any = await api.get(`Ratings/check/${userId}`);
+    // console.log("Data : " + JSON.stringify(response));
+    if (response.message === "No rating found") return null;
+    setExisitingRating(response);
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -22,7 +43,7 @@ export default function GuestUserPage() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Charlie</Text>
+        <Text style={styles.headerTitle}>{user?.name}</Text>
         <TouchableOpacity>
           <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
         </TouchableOpacity>
@@ -33,31 +54,74 @@ export default function GuestUserPage() {
         <View style={styles.centered}>
           <ImageBackground
             source={{
-              uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuBntWqWNDcbtOjSRAK9FE2VyIpUqBfz1__Yz7RVEMZlKf_PgrkK0TOPSivftCqpi2Po5kURVBCYLmS0yoHoLSv7QcC4kswk75m9cicNORRE1oui2rJWk__RNcXjxKTtmHHICjYs9u8ng_zG-lGrEQSxT7IvsA80NmcOTNeiQui-VGjhOLZq4ctS3NVDE5d_SV6sdt27NIobbp_xOhiC630cU8el1spuppbCgbijuNaMbBd6HMaLnZmwntjfZXd3OGXTbhR_eEcUGSg",
+              uri: `${user?.image}`,
             }}
             style={styles.avatar}
             imageStyle={{ borderRadius: 64 }}
           />
-          <Text style={styles.name}>Charlie</Text>
-          <Text style={styles.rating}>★ 4 Rating</Text>
-          <Text style={styles.description}>
-            Passionate about connecting with new people and exploring shared
-            interests. Always open to new experiences!
-          </Text>
+          <Text style={styles.name}>{user?.name}</Text>
+          {/* <Text style={styles.rating}>★ {user?.rating} Rating</Text> */}
+          <Text style={styles.description}>{user?.bio}</Text>
+        </View>
+        {/* Rating */}
+        <View style={styles.ratingWrapper}>
+          <View>
+            <Text style={styles.ratingScore}>{user?.rating}</Text>
+            <View style={{ flexDirection: "row" }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Ionicons
+                  key={i}
+                  name={i <= 4 ? "star" : "star-outline"}
+                  size={18}
+                  color="#7B4AE2"
+                />
+              ))}
+            </View>
+            <Text style={styles.subText}>120 reviews</Text>
+          </View>
+
+          {/* Rating Breakdown */}
+          <View style={{ flex: 1, marginLeft: 16 }}>
+            {[
+              { star: "5", percent: 70 },
+              { star: "4", percent: 20 },
+              { star: "3", percent: 5 },
+              { star: "2", percent: 3 },
+              { star: "1", percent: 2 },
+            ].map((item, i) => (
+              <View key={i} style={styles.progressRow}>
+                <Text style={styles.progressLabel}>{item.star}</Text>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[styles.progressFill, { width: `${item.percent}%` }]}
+                  />
+                </View>
+                <Text style={styles.progressPercent}>{item.percent}%</Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Buttons */}
         <View style={styles.buttons}>
-          <TouchableOpacity style={styles.primaryBtn}>
+          {/* <TouchableOpacity style={styles.primaryBtn}>
             <Text style={styles.primaryText}>Connect</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             style={styles.secondaryBtn}
             onPress={() => {
-              router.navigate("/rateuser");
+              router.navigate({
+                pathname: "/rateuser",
+                params: {
+                  user: JSON.stringify(user),
+                  existingRating: JSON.stringify(exisitingRating),
+                },
+              });
             }}
           >
-            <Text style={styles.secondaryText}>Rate as stranger</Text>
+            <Text style={styles.secondaryText}>
+              {exisitingRating ? "Edit Rating" : "Rate as stranger"}
+            </Text>
           </TouchableOpacity>
         </View>
         {/* Rating */}
@@ -101,7 +165,8 @@ export default function GuestUserPage() {
 
         {/* Tabs */}
         <View style={styles.tabRow}>
-          {["Profile", "Activity", "Friends"].map((tab) => (
+          {/* {["Profile", "Activity", "Friends"].map((tab) => ( */}
+          {["Profile"].map((tab) => (
             <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
               <Text
                 style={[

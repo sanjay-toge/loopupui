@@ -1,15 +1,7 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // for icons
-import { router } from "expo-router";
+import React from "react";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useAppContext } from "./_layout";
 
 const reviews = [
   {
@@ -63,10 +55,13 @@ const reviews = [
 ];
 
 export default function RatingScreen() {
+  const { user } = useAppContext();
+
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      {/* <View style={styles.header}>
+    <View style={styles.container}>
+      <ScrollView>
+        {/* Header */}
+        {/* <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
             router.back();
@@ -78,103 +73,104 @@ export default function RatingScreen() {
         <View style={{ width: 24 }} />
       </View> */}
 
-      {/* Profile Info */}
-      <View style={styles.profileWrapper}>
-        <Image
-          source={{ uri: "https://picsum.photos/200" }}
-          style={styles.avatar}
-        />
-        <Text style={styles.name}>Sophia Carter</Text>
-        <Text style={styles.subText}>Joined Since 2021</Text>
-      </View>
+        {/* Profile Info */}
+        <View style={styles.profileWrapper}>
+          <Image source={{ uri: `${user?.image}` }} style={styles.avatar} />
+          <Text style={styles.name}>{user?.name}</Text>
+          <Text style={styles.subText}>Joined Since 2021</Text>
+        </View>
 
-      {/* Rating */}
-      <View style={styles.ratingWrapper}>
-        <View>
-          <Text style={styles.ratingScore}>4.8</Text>
-          <View style={{ flexDirection: "row" }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Ionicons
-                key={i}
-                name={i <= 4 ? "star" : "star-outline"}
-                size={18}
-                color="#7B4AE2"
-              />
+        {/* Rating */}
+        <View style={styles.ratingWrapper}>
+          <View>
+            <Text style={styles.ratingScore}>{user?.rating}</Text>
+            <View style={{ flexDirection: "row" }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Ionicons
+                  key={i}
+                  name={i <= 4 ? "star" : "star-outline"}
+                  size={18}
+                  color="#7B4AE2"
+                />
+              ))}
+            </View>
+            <Text style={styles.subText}>120 reviews</Text>
+          </View>
+
+          {/* Rating Breakdown */}
+          <View style={{ flex: 1, marginLeft: 16 }}>
+            {[
+              { star: "5", percent: 70 },
+              { star: "4", percent: 20 },
+              { star: "3", percent: 5 },
+              { star: "2", percent: 3 },
+              { star: "1", percent: 2 },
+            ].map((item, i) => (
+              <View key={i} style={styles.progressRow}>
+                <Text style={styles.progressLabel}>{item.star}</Text>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[styles.progressFill, { width: `${item.percent}%` }]}
+                  />
+                </View>
+                <Text style={styles.progressPercent}>{item.percent}%</Text>
+              </View>
             ))}
           </View>
-          <Text style={styles.subText}>120 reviews</Text>
         </View>
 
-        {/* Rating Breakdown */}
-        <View style={{ flex: 1, marginLeft: 16 }}>
-          {[
-            { star: "5", percent: 70 },
-            { star: "4", percent: 20 },
-            { star: "3", percent: 5 },
-            { star: "2", percent: 3 },
-            { star: "1", percent: 2 },
-          ].map((item, i) => (
-            <View key={i} style={styles.progressRow}>
-              <Text style={styles.progressLabel}>{item.star}</Text>
-              <View style={styles.progressBar}>
-                <View
-                  style={[styles.progressFill, { width: `${item.percent}%` }]}
-                />
-              </View>
-              <Text style={styles.progressPercent}>{item.percent}%</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Friendship Details */}
-      <Text style={styles.sectionTitle}>Friendship Details</Text>
-      <View style={styles.detailsWrapper}>
-        <View style={styles.detailCard}>
-          <Ionicons name="time" size={22} color="white" />
-          <Text style={styles.detailText}>150 Friends</Text>
-        </View>
-        <View style={styles.detailCard}>
-          <Ionicons name="heart" size={22} color="white" />
-          <Text style={styles.detailText}>Supportive</Text>
-        </View>
-        <View style={styles.detailCard}>
-          <Ionicons name="happy" size={22} color="white" />
-          <Text style={styles.detailText}>Positive</Text>
-        </View>
-        <View style={styles.detailCard}>
-          <Ionicons name="star" size={22} color="white" />
-          <Text style={styles.detailText}>Kind</Text>
-        </View>
-      </View>
-
-      {/* Reviews */}
-      <Text style={styles.sectionTitle}>Reviews</Text>
-      {reviews.map((item) => (
-        <View style={{ padding: 16 }} key={item.id}>
-          <View key={item.id} style={styles.reviewCard}>
-            <Image source={{ uri: item.avatar }} style={styles.reviewAvatar} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.reviewName}>{item.name}</Text>
-              <Text style={styles.subText}>{item.time}</Text>
-
-              <View style={{ flexDirection: "row", marginTop: 4 }}>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Ionicons
-                    key={i}
-                    name={i <= item.rating ? "star" : "star-outline"}
-                    size={20}
-                    color="#7B4AE2"
-                  />
-                ))}
-              </View>
-
-              <Text style={styles.reviewText}>{item.text}</Text>
-            </View>
+        {/* Friendship Details */}
+        <Text style={styles.sectionTitle}>Friendship Details</Text>
+        <View style={styles.detailsWrapper}>
+          <View style={styles.detailCard}>
+            <Ionicons name="time" size={22} color="white" />
+            <Text style={styles.detailText}>150 Friends</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Ionicons name="heart" size={22} color="white" />
+            <Text style={styles.detailText}>Supportive</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Ionicons name="happy" size={22} color="white" />
+            <Text style={styles.detailText}>Positive</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Ionicons name="star" size={22} color="white" />
+            <Text style={styles.detailText}>Kind</Text>
           </View>
         </View>
-      ))}
-    </ScrollView>
+
+        {/* Reviews */}
+        <Text style={styles.sectionTitle}>Reviews</Text>
+        {reviews.map((item) => (
+          <View style={{ padding: 16 }} key={item.id}>
+            <View key={item.id} style={styles.reviewCard}>
+              <Image
+                source={{ uri: item.avatar }}
+                style={styles.reviewAvatar}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.reviewName}>{item.name}</Text>
+                <Text style={styles.subText}>{item.time}</Text>
+
+                <View style={{ flexDirection: "row", marginTop: 4 }}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Ionicons
+                      key={i}
+                      name={i <= item.rating ? "star" : "star-outline"}
+                      size={20}
+                      color="#7B4AE2"
+                    />
+                  ))}
+                </View>
+
+                <Text style={styles.reviewText}>{item.text}</Text>
+              </View>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
