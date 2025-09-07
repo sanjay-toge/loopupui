@@ -1,4 +1,4 @@
-#In the api.ts file, change below line const BASE_URL = 
+# In the api.ts file, change below line const BASE_URL = 
 # 'http://192.168.1.3:5261/api/'; to 'yourmachineipv4:portnumber/api'  this is the api url
 # Welcome to your Expo app 👋
 
